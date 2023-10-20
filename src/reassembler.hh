@@ -1,11 +1,18 @@
 #pragma once
 
 #include "byte_stream.hh"
-
+#include <map>
 #include <string>
 
 class Reassembler
 {
+private:
+  std::map<uint64_t, std::string> substr;
+  std::string str;
+  uint64_t first_unassembled;
+  uint64_t first_unacceptable;
+  bool close;
+
 public:
   /*
    * Insert a new substring to be reassembled into a ByteStream.
@@ -27,8 +34,10 @@ public:
    *
    * The Reassembler should close the stream after writing the last byte.
    */
+  explicit Reassembler();
   void insert( uint64_t first_index, std::string data, bool is_last_substring, Writer& output );
 
   // How many bytes are stored in the Reassembler itself?
   uint64_t bytes_pending() const;
+  uint64_t get_first_unassembled() const { return first_unassembled; }
 };

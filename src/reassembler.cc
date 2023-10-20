@@ -1,18 +1,80 @@
 #include "reassembler.hh"
+#include <map>
+// #define MAX_SEGMENT_SIZE
 
 using namespace std;
+
+Reassembler::Reassembler() : substr {}, str( "" ), first_unassembled( 0 ), first_unacceptable( 0 ), close( false )
+{}
 
 void Reassembler::insert( uint64_t first_index, string data, bool is_last_substring, Writer& output )
 {
   // Your code here.
-  (void)first_index;
-  (void)data;
-  (void)is_last_substring;
-  (void)output;
+  u_int64_t last_data_index = first_index + data.size();
+  first_unassembled = output.bytes_pushed();
+  first_unacceptable = first_unassembled + output.available_capacity();  
+  close |= is_last_substring;
+  
+  if ( last_data_index < first_unassembled || first_index > first_unacceptable || last_data_index == first_index ) {
+    if ( close && substr.empty() )
+      output.close();
+    return;
+  }
+
+  last_data_index = (last_data_index > first_unacceptable) ? first_unacceptable : last_data_index;
+  if ( first_index > first_unassembled )
+    str = data.substr( 0, last_data_index - first_index );
+  else
+    str = data.substr( first_unassembled - first_index );
+
+  for ( auto itr = substr.begin(); itr != substr.end(); ) {
+    if ( last_data_index < itr->first )
+      break;
+
+    uint64_t last_substr_index = itr->first + itr->second.size();
+    if ( first_index > last_substr_index ) {
+      itr++;
+      continue;
+    }
+
+    if ( first_index >= itr->first && last_data_index <= last_substr_index ) {
+      str.clear();
+      break;
+    }
+
+    if ( first_index < itr->first && last_data_index < last_substr_index ) {
+      str.append( itr->second, last_data_index - itr->first );
+      last_data_index = last_substr_index;
+    }
+
+    if ( first_index > itr->first && last_data_index > last_substr_index ) {
+      str = itr->second.append( str, last_substr_index - first_index );
+      first_index = itr->first;
+    }
+
+    substr.erase( itr++ );
+  }
+
+  if ( first_index > first_unassembled )
+    substr.insert( { first_index, str } );
+  else {
+    output.push( str );
+    first_unassembled += str.size();
+  }
+
+  if ( close && substr.empty() )
+    output.close();
+  str.clear();
+  return;
 }
 
 uint64_t Reassembler::bytes_pending() const
 {
   // Your code here.
-  return {};
+  uint64_t bytes_pending = 0;
+
+  for ( auto itr = substr.begin(); itr != substr.end(); ++itr ) {
+    bytes_pending += itr->second.size();
+  }
+  return bytes_pending;
 }

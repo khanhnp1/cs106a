@@ -5,6 +5,11 @@
 #include <string>
 #include <string_view>
 
+#define BYTE_STREAM_INPUT 1 << 0
+#define BYTE_STREAM_CLOSE 1 << 1
+#define BYTE_STREAM_POPED 1 << 2
+#define BYTE_STREAM_ERROR 1 << 3
+
 class Reader;
 class Writer;
 
@@ -13,6 +18,11 @@ class ByteStream
 protected:
   uint64_t capacity_;
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
+  uint64_t used;
+  std::string _data;
+  uint64_t byte_writen;
+  uint64_t byte_read;
+  uint32_t state;
 
 public:
   explicit ByteStream( uint64_t capacity );
