@@ -14,20 +14,21 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
   first_unassembled = output.bytes_pushed();
   first_unacceptable = first_unassembled + output.available_capacity();  
   close |= is_last_substring;
-  
+  /* Invalid data */
   if ( last_data_index < first_unassembled || first_index > first_unacceptable || last_data_index == first_index ) {
     if ( close && substr.empty() )
       output.close();
     return;
   }
-
+  /* Remove ignore data */
   last_data_index = (last_data_index > first_unacceptable) ? first_unacceptable : last_data_index;
   if ( first_index > first_unassembled )
     str = data.substr( 0, last_data_index - first_index );
   else
     str = data.substr( first_unassembled - first_index );
-
+  /* Reassemble with the older data */
   for ( auto itr = substr.begin(); itr != substr.end(); ) {
+    /* Not overlap */
     if ( last_data_index < itr->first )
       break;
 
@@ -36,12 +37,12 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
       itr++;
       continue;
     }
-
+    /* Data already exist */
     if ( first_index >= itr->first && last_data_index <= last_substr_index ) {
       str.clear();
       break;
     }
-
+    /* Overlap - merge with older data to the new one */
     if ( first_index < itr->first && last_data_index < last_substr_index ) {
       str.append( itr->second, last_data_index - itr->first );
       last_data_index = last_substr_index;
@@ -54,7 +55,7 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
 
     substr.erase( itr++ );
   }
-
+  /* Insert if data not enough, output when ressenable successfull */
   if ( first_index > first_unassembled )
     substr.insert( { first_index, str } );
   else {
