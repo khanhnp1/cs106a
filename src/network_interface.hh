@@ -32,6 +32,11 @@
 // the network interface passes it up the stack. If it's an ARP
 // request or reply, the network interface processes the frame
 // and learns or replies as necessary.
+enum time_val {
+  ARP_SENT_TIMEOUT    = 5000,
+  ARP_RECORD_TIMEOUT  = 30000
+};
+
 class NetworkInterface
 {
 private:
@@ -40,6 +45,12 @@ private:
 
   // IP (known as Internet-layer or network-layer) address of the interface
   Address ip_address_;
+
+  uint32_t current_time = 0;
+  std::queue<EthernetFrame> packet {};
+  std::unordered_map<uint32_t, std::queue<InternetDatagram>> datagram {};
+  std::unordered_map<uint32_t, size_t> arp_timer {};
+  std::unordered_map<uint32_t, EthernetAddress> arp_table {};
 
 public:
   // Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer)

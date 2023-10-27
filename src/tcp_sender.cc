@@ -128,7 +128,6 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
 void TCPSender::tick( const size_t ms_since_last_tick )
 {
   // Your code here.
-
   if ( !timer_start || outstand_segment.empty() ) {
     timer_expire = false;
     time_tx = 0;
